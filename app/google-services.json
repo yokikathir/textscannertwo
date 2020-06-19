@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "780226501207",
+    "firebase_url": "https://textscannertwo.firebaseio.com",
+    "project_id": "textscannertwo",
+    "storage_bucket": "textscannertwo.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:780226501207:android:2e71bb54665bc360eb6112",
+        "android_client_info": {
+          "package_name": "com.ppms.textscannertwo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "780226501207-guqck27qq2cqlkj5vau6f3qbea7f1dih.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ppms.textscannertwo",
+            "certificate_hash": "972cd3de7d86a705eaf9318c074e876946716069"
+          }
+        },
+        {
+          "client_id": "780226501207-dfd1bsc8hu6ip14vb0loullrdqdtcmvg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDdSTwzLyq7PEW2rG54dCmPZe3LE-pCUiI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "780226501207-dfd1bsc8hu6ip14vb0loullrdqdtcmvg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
