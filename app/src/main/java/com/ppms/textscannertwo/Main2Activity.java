@@ -8,8 +8,10 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -20,86 +22,96 @@ import com.google.firebase.ml.vision.common.FirebaseVisionImage;
 import com.google.firebase.ml.vision.text.FirebaseVisionText;
 import com.google.firebase.ml.vision.text.FirebaseVisionTextDetector;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Main2Activity extends AppCompatActivity {
 
-
-    private Button snapBtn;
-    private Button detectBtn;
-    private ImageView imageView;
-    private TextView txtView;
-    private Bitmap imageBitmap;
+    Button searchbtn;
+    private HashMap<String, Integer> textMap;
+    private String name = "kathiravan";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main2);
-        snapBtn = findViewById(R.id.snapBtn);
-        detectBtn = findViewById(R.id.detectBtn);
-        imageView = findViewById(R.id.imageView);
-        txtView = findViewById(R.id.txtView);
+        setContentView(R.layout.activity_main);
 
-        snapBtn.setOnClickListener(new View.OnClickListener() {
+        searchbtn = (Button) findViewById(R.id.searchbtn);
+
+        textMap = new HashMap<>();
+        textMap.put("kathir", (int) similarity(name, "kathir") * 100);
+        textMap.put("kathira", (int) similarity(name, "kathira") * 100);
+        textMap.put("kathirava", (int) similarity(name, "kathirava") * 100);
+        textMap.put("kathiravan", (int) similarity(name, "kathiravan") * 100);
+        textMap.put("kathvan", (int) similarity(name, "kathvan") * 100);
+        textMap.put("kathin", (int) similarity(name, "kathin") * 100);
+        textMap.put("sfsff", (int) similarity(name, "sfsff") * 100);
+
+        searchbtn.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View view) {
-                dispatchTakePictureIntent();
-            }
-        });
-        detectBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                detectTxt();
-            }
-        });
-    }
+            public void onClick(View v) {
+                Map.Entry<String, Integer> maxEntry = null;
+                for (Map.Entry<String, Integer> entry : textMap.entrySet()) {
+                    if (maxEntry == null || entry.getValue().compareTo(maxEntry.getValue()) > 0) {
+                        maxEntry = entry;
+                    }
+                }
 
-    static final int REQUEST_IMAGE_CAPTURE = 1;
-
-    private void dispatchTakePictureIntent() {
-        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-            startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE);
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
-            Bundle extras = data.getExtras();
-            imageBitmap = (Bitmap) extras.get("data");
-            imageView.setImageBitmap(imageBitmap);
-        }
-    }
-
-    private void detectTxt() {
-        FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(imageBitmap);
-        FirebaseVisionTextDetector detector = FirebaseVision.getInstance().getVisionTextDetector();
-        detector.detectInImage(image).addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
-            @Override
-            public void onSuccess(FirebaseVisionText firebaseVisionText) {
-                processTxt(firebaseVisionText);
-            }
-        }).addOnFailureListener(new OnFailureListener() {
-            @Override
-            public void onFailure(@NonNull Exception e) {
+                Toast.makeText(Main2Activity.this, maxEntry.getKey() + " is " +maxEntry.getValue() + "% match", Toast.LENGTH_LONG).show();
 
             }
         });
+
     }
 
-    private void processTxt(FirebaseVisionText text) {
-        List<FirebaseVisionText.Block> blocks = text.getBlocks();
-        if (blocks.size() == 0) {
-            Toast.makeText(Main2Activity.this, "No Text :(", Toast.LENGTH_LONG).show();
-            return;
+
+
+    public static double similarity(String s1, String s2) {
+        String longer = s1, shorter = s2;
+        if (s1.length() < s2.length()) { // longer should always have greater length
+            longer = s2;
+            shorter = s1;
         }
-        for (FirebaseVisionText.Block block : text.getBlocks()) {
-            String txt = block.getText();
-            txtView.setTextSize(24);
-            txtView.setText(txt);
+        int longerLength = longer.length();
+        if (longerLength == 0) {
+            return 1.0; /* both strings are zero length */
         }
+    /* // If you have Apache Commons Text, you can use it to calculate the edit distance:
+    LevenshteinDistance levenshteinDistance = new LevenshteinDistance();
+    return (longerLength - levenshteinDistance.apply(longer, shorter)) / (double) longerLength; */
+        return (longerLength - editDistance(longer, shorter)) / (double) longerLength;
+
+    }
+
+    // Example implementation of the Levenshtein Edit Distance
+    // See http://rosettacode.org/wiki/Levenshtein_distance#Java
+    public static int editDistance(String s1, String s2) {
+        s1 = s1.toLowerCase();
+        s2 = s2.toLowerCase();
+
+        int[] costs = new int[s2.length() + 1];
+        for (int i = 0; i <= s1.length(); i++) {
+            int lastValue = i;
+            for (int j = 0; j <= s2.length(); j++) {
+                if (i == 0)
+                    costs[j] = j;
+                else {
+                    if (j > 0) {
+                        int newValue = costs[j - 1];
+                        if (s1.charAt(i - 1) != s2.charAt(j - 1))
+                            newValue = Math.min(Math.min(newValue, lastValue),
+                                    costs[j]) + 1;
+                        costs[j - 1] = lastValue;
+                        lastValue = newValue;
+                    }
+                }
+            }
+            if (i > 0)
+                costs[s2.length()] = lastValue;
+        }
+        return costs[s2.length()];
     }
 
 }

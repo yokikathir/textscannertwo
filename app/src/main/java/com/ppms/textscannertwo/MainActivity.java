@@ -15,9 +15,18 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.text.Editable;
+import android.text.Html;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -33,8 +42,12 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MainActivity extends BaseActivity implements View.OnClickListener {
     public static final int MULTIPLE_PERMISSIONS = 10;
@@ -50,16 +63,29 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
     };
     private Bitmap myBitmap;
+    private Button searchbtn;
     private ImageView myImageView;
     private TextView myTextView;
     static final int REQUEST_TAKE_PHOTO = 1;
     static final int REQUEST_IMAGE_CAPTURE = 1;
     File mPhotoFile;
     FileCompressor mCompressor;
+    AutoCompleteTextView autoCompleteTextView;
+    EditText editetext;
+    String items;
+    String autoitems;
+    String fullTxt;
+    String word_search;
+    String[] languages={"Android ","java","IOS","SQL","JDBC","Web services"};
+    private HashMap<String, Integer> textMap;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        Button searchbtn=findViewById(R.id.searchbtn);
+       // autoCompleteTextView=findViewById(R.id.auto);
+        editetext=findViewById(R.id.editetext);
         if (!checkPermissions()) {
             isRuntimePermission();
         }
@@ -68,7 +94,233 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         myImageView = findViewById(R.id.imageView);
         findViewById(R.id.checkText).setOnClickListener(this);
         findViewById(R.id.camera).setOnClickListener(this);
+
+      /*  fullTxt = myTextView.getText().toString();
+        if (fullTxt!=null) {
+            String[] arrayy = fullTxt.split("\n");
+            String[] markierty = new String[arrayy.length];
+            ArrayAdapter adapterr = new
+                    ArrayAdapter(MainActivity.this, android.R.layout.simple_list_item_1, markierty);
+
+            autoCompleteTextView.setAdapter(adapterr);
+            autoCompleteTextView.setThreshold(1);
+        }*/
+        autoitems=editetext.getText().toString();
+        String word_search = autoitems.trim().toLowerCase();
+        final String fullTxt = myTextView.getText().toString();
+        textMap = new HashMap<>();
+//        textMap.put("kathir", (int) similarity(name, "kathir") * 100);
+//        textMap.put("kathira", (int) similarity(name, "kathira") * 100);
+//        textMap.put("kathirava", (int) similarity(name, "kathirava") * 100);
+//        textMap.put("kathiravan", (int) similarity(name, "kathiravan") * 100);
+//        textMap.put("kathvan", (int) similarity(name, "kathvan") * 100);
+//        textMap.put("kathin", (int) similarity(name, "kathin") * 100);
+//        textMap.put("sfsff", (int) similarity(name, "sfsff") * 100);
+
+        editetext.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+                textMap.clear();
+                textMap.put(s.toString(), (int) similarity("kathiravan", s.toString()) * 100);
+                // you should make list for show list. and use adapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+
+            }
+        });
+
+        searchbtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Map.Entry<String, Integer> maxEntry = null;
+                for (Map.Entry<String, Integer> entry : textMap.entrySet()) {
+                    if (maxEntry == null || entry.getValue().compareTo(maxEntry.getValue()) > 0) {
+                        maxEntry = entry;
+                    }
+                }
+
+                Toast.makeText(MainActivity.this, maxEntry.getKey() + " is " +maxEntry.getValue() + "% match", Toast.LENGTH_LONG).show();
+
+            }
+        });
+
     }
+
+
+
+    public static double similarity(String s1, String s2) {
+        String longer = s1, shorter = s2;
+        if (s1.length() < s2.length()) { // longer should always have greater length
+            longer = s2;
+            shorter = s1;
+        }
+        int longerLength = longer.length();
+        if (longerLength == 0) {
+            return 1.0; /* both strings are zero length */
+        }
+        /* // If you have Apache Commons Text, you can use it to calculate the edit distance:
+        LevenshteinDistance levenshteinDistance = new LevenshteinDistance();
+        return (longerLength - levenshteinDistance.apply(longer, shorter)) / (double) longerLength; */
+        return (longerLength - editDistance(longer, shorter)) / (double) longerLength;
+
+    }
+
+    // Example implementation of the Levenshtein Edit Distance
+    // See http://rosettacode.org/wiki/Levenshtein_distance#Java
+    public static int editDistance(String s1, String s2) {
+        s1 = s1.toLowerCase();
+        s2 = s2.toLowerCase();
+
+        int[] costs = new int[s2.length() + 1];
+        for (int i = 0; i <= s1.length(); i++) {
+            int lastValue = i;
+            for (int j = 0; j <= s2.length(); j++) {
+                if (i == 0)
+                    costs[j] = j;
+                else {
+                    if (j > 0) {
+                        int newValue = costs[j - 1];
+                        if (s1.charAt(i - 1) != s2.charAt(j - 1))
+                            newValue = Math.min(Math.min(newValue, lastValue),
+                                    costs[j]) + 1;
+                        costs[j - 1] = lastValue;
+                        lastValue = newValue;
+                    }
+                }
+            }
+            if (i > 0)
+                costs[s2.length()] = lastValue;
+        }
+        return costs[s2.length()];
+    }
+
+        //----------------------------------------------------------------------------------------------------------------
+       /* searchbtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                autoitems=editetext.getText().toString();
+
+
+                int total = 0;
+                String word_search = autoitems.trim().toLowerCase();
+                String fullTxt = myTextView.getText().toString();
+               // match(fullTxt,word_search);
+
+                String[] array = fullTxt.split("\n");
+                String[] markiert = new String[array.length];
+                String word;
+                StringBuilder st = new StringBuilder();
+                for (int i = 0; i < array.length; i++) {
+                    word = array[i];
+                    if (word.toLowerCase().contains(word_search)) {
+                        word_search = autoitems.trim().toLowerCase();
+                        String name = word_search;
+
+                            int maxArrayPosition = 0;
+                        for (int j = 0; j < array.length - 1; j++) {
+                            for (String c : array) {
+                                int next = c.indexOf(c, i);
+                            }
+                            if (similarity(name, array[j]) > similarity(name, array[j + 1])) {
+                                maxArrayPosition = j;
+                            } else {
+                                maxArrayPosition = j + 1;
+                            }
+                        }
+                        printSimilarity(name, array[maxArrayPosition]);
+                        Log.e("wordtext", ":" + word + "------>" + word_search + "----->");
+
+                        markiert[i] = word.trim();//this is result in array do whatever you want with it
+                        st.append("<b><i>" + markiert[i] + "</i></b>");
+                        total++;
+                    } else {
+                        st.append(word);
+                    }
+                    st.append("<br>");
+                }
+                //Toast.makeText(MainActivity.this,"Text"+st+"",Toast.LENGTH_LONG).show();
+               // Toast.makeText(MainActivity.this,"Text"+total+"",Toast.LENGTH_LONG).show();
+
+            }
+        });
+
+
+    }
+    public  boolean match(String s, String p) {
+        String us = s.toUpperCase();
+        int i = 0;
+        for (char c : p.toUpperCase().toCharArray()) {
+            int next = us.indexOf(c, i);
+            if (next < 0) {
+                return false;
+            }
+            i = next+1;
+
+
+        }
+        return true;
+    }
+    public static double similarity(String s1, String s2) {
+        String longer = s1, shorter = s2;
+        if (s1.length() < s2.length()) { // longer should always have greater length
+            longer = s2;
+            shorter = s1;
+        }
+        int longerLength = longer.length();
+        if (longerLength == 0) {
+            return 1.0; *//* both strings are zero length *//*
+        }
+    *//* // If you have Apache Commons Text, you can use it to calculate the edit distance:
+    LevenshteinDistance levenshteinDistance = new LevenshteinDistance();
+    return (longerLength - levenshteinDistance.apply(longer, shorter)) / (double) longerLength; *//*
+        return (longerLength - editDistance(longer, shorter)) / (double) longerLength;
+
+    }
+
+    // Example implementation of the Levenshtein Edit Distance
+    // See http://rosettacode.org/wiki/Levenshtein_distance#Java
+    public static int editDistance(String s1, String s2) {
+        s1 = s1.toLowerCase();
+        s2 = s2.toLowerCase();
+
+        int[] costs = new int[s2.length() + 1];
+        for (int i = 0; i <= s1.length(); i++) {
+            int lastValue = i;
+            for (int j = 0; j <= s2.length(); j++) {
+                if (i == 0)
+                    costs[j] = j;
+
+                else {
+                    if (j > 0) {
+                        int newValue = costs[j - 1];
+                        if (s1.charAt(i - 1) != s2.charAt(j - 1))
+                            newValue = Math.min(Math.min(newValue, lastValue),
+                                    costs[j]) + 1;
+                        costs[j - 1] = lastValue;
+                        lastValue = newValue;
+                        Log.e("results--->",":"+lastValue+"--->"+costs[j]);
+                    }
+                }
+            }
+            if (i > 0)
+                costs[s2.length()] = lastValue;
+        }
+        return costs[s2.length()];
+    }
+
+    public void printSimilarity(String s, String t) {
+        Toast.makeText(MainActivity.this,similarity(s, t)*100 + "% match",Toast.LENGTH_LONG).show();
+        System.out.println(String.format("%.3f is the similarity between \"%s\" and \"%s\"", similarity(s, t), s, t));
+        Log.e("results--->",":"+s+"--->"+t);
+    }*/
+//-------------------------------------------------------------------------------------------------------------------------------------------
 
     @Override
     public void onClick(View view) {
