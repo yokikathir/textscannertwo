@@ -76,16 +76,16 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
     String autoitems;
     String fullTxt;
     String word_search;
-    String[] languages={"Android ","java","IOS","SQL","JDBC","Web services"};
+    String[] languages = {"Android ", "java", "IOS", "SQL", "JDBC", "Web services"};
     private HashMap<String, Integer> textMap;
-
+    String[] array_fullTxt;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Button searchbtn=findViewById(R.id.searchbtn);
-       // autoCompleteTextView=findViewById(R.id.auto);
-        editetext=findViewById(R.id.editetext);
+        Button searchbtn = findViewById(R.id.searchbtn);
+        // autoCompleteTextView=findViewById(R.id.auto);
+        editetext = findViewById(R.id.editetext);
         if (!checkPermissions()) {
             isRuntimePermission();
         }
@@ -105,29 +105,38 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
             autoCompleteTextView.setAdapter(adapterr);
             autoCompleteTextView.setThreshold(1);
         }*/
-        autoitems=editetext.getText().toString();
+        autoitems = editetext.getText().toString();
         String word_search = autoitems.trim().toLowerCase();
-        final String fullTxt = myTextView.getText().toString();
-        textMap = new HashMap<>();
-//        textMap.put("kathir", (int) similarity(name, "kathir") * 100);
-//        textMap.put("kathira", (int) similarity(name, "kathira") * 100);
-//        textMap.put("kathirava", (int) similarity(name, "kathirava") * 100);
-//        textMap.put("kathiravan", (int) similarity(name, "kathiravan") * 100);
-//        textMap.put("kathvan", (int) similarity(name, "kathvan") * 100);
-//        textMap.put("kathin", (int) similarity(name, "kathin") * 100);
-//        textMap.put("sfsff", (int) similarity(name, "sfsff") * 100);
+
 
         editetext.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
-                textMap.clear();
-                textMap.put(s.toString(), (int) similarity("kathiravan", s.toString()) * 100);
-                // you should make list for show list. and use adapter.notifyDataSetChanged();
             }
 
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
 
+
+               int countt=0;
+                for (int j=0; j<s.length();j++){
+                    for (int k=0; k<fullTxt.length();k++){
+                        Log.e("equalstring",":"+s.charAt(j)+"---->"+fullTxt.charAt(k));
+                        if (s.charAt(j)==(fullTxt.charAt(k))){
+                            countt++;
+                        }
+                    }
+                    Log.e("DuplicateCount", ":" + s.charAt(j) + "    " + countt);
+                    String str = String.valueOf(s.charAt(j));
+                    s = fullTxt.replace(str, "");
+                    countt = 0;
+
+                }
+
+                for (int i = 0; i < array_fullTxt.length; i++) {
+                    Log.e("array_fullTxt[i]", array_fullTxt[i]);
+                    textMap.put(array_fullTxt[i], (int) similarity(s.toString(), array_fullTxt[i]) * 100);
+                }
             }
 
             @Override
@@ -139,6 +148,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         searchbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+
                 Map.Entry<String, Integer> maxEntry = null;
                 for (Map.Entry<String, Integer> entry : textMap.entrySet()) {
                     if (maxEntry == null || entry.getValue().compareTo(maxEntry.getValue()) > 0) {
@@ -146,13 +156,12 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                     }
                 }
 
-                Toast.makeText(MainActivity.this, maxEntry.getKey() + " is " +maxEntry.getValue() + "% match", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, maxEntry.getKey() + " is " + maxEntry.getValue() + "% match", Toast.LENGTH_LONG).show();
 
             }
         });
 
     }
-
 
 
     public static double similarity(String s1, String s2) {
@@ -201,7 +210,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         return costs[s2.length()];
     }
 
-        //----------------------------------------------------------------------------------------------------------------
+    //----------------------------------------------------------------------------------------------------------------
        /* searchbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -314,14 +323,18 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
         }
         return costs[s2.length()];
     }
-
+ public void printSimilarity(String s, String t) {
+        Toast.makeText(MainActivity.this,similarity(s, t)*100 + "% match",Toast.LENGTH_LONG).show();
+        System.out.println(String.format("%.3f is the similarity between \"%s\" and \"%s\"", similarity(s, t), s, t));
+        Log.e("results--->",":"+s+"--->"+t);
+    }
+   */
+//-------------------------------------------------------------------------------------------------------------------------------------------
     public void printSimilarity(String s, String t) {
         Toast.makeText(MainActivity.this,similarity(s, t)*100 + "% match",Toast.LENGTH_LONG).show();
         System.out.println(String.format("%.3f is the similarity between \"%s\" and \"%s\"", similarity(s, t), s, t));
         Log.e("results--->",":"+s+"--->"+t);
-    }*/
-//-------------------------------------------------------------------------------------------------------------------------------------------
-
+    }
     @Override
     public void onClick(View view) {
         switch (view.getId()) {
@@ -347,52 +360,53 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
                 break;
         }
     }
-/*
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
-            switch (requestCode) {
-                case WRITE_STORAGE:
-                    checkPermission(requestCode);
-                    break;
-                case SELECT_PHOTO:
-                    Uri dataUri = data.getData();
-                    String path = MyHelper.getPath(this, dataUri);
-                    if (path == null) {
-                        myBitmap = MyHelper.resizePhoto(photo, this, dataUri, myImageView);
-                    } else {
-                        myBitmap = MyHelper.resizePhoto(photo, path, myImageView);
-                    }
-                    if (myBitmap != null) {
-                        myTextView.setText(null);
-                        myImageView.setImageBitmap(myBitmap);
-                    }
-                    break;
 
+    /*
+        @Override
+        protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+            super.onActivityResult(requestCode, resultCode, data);
+            if (resultCode == RESULT_OK) {
+                switch (requestCode) {
+                    case WRITE_STORAGE:
+                        checkPermission(requestCode);
+                        break;
+                    case SELECT_PHOTO:
+                        Uri dataUri = data.getData();
+                        String path = MyHelper.getPath(this, dataUri);
+                        if (path == null) {
+                            myBitmap = MyHelper.resizePhoto(photo, this, dataUri, myImageView);
+                        } else {
+                            myBitmap = MyHelper.resizePhoto(photo, path, myImageView);
+                        }
+                        if (myBitmap != null) {
+                            myTextView.setText(null);
+                            myImageView.setImageBitmap(myBitmap);
+                        }
+                        break;
+
+                }
+            }
+        }*/
+    private void dispatchTakePictureIntent() {
+        Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
+            // Create the File where the photo should go
+            File photoFile = null;
+            try {
+                photoFile = createImageFile();
+            } catch (IOException ex) {
+                ex.printStackTrace();
+                // Error occurred while creating the File
+            }
+            if (photoFile != null) {
+                Uri photoURI = FileProvider.getUriForFile(this, getPackageName() + ".provider", photoFile);
+
+                mPhotoFile = photoFile;
+                takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
             }
         }
-    }*/
-private void dispatchTakePictureIntent() {
-    Intent takePictureIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-    if (takePictureIntent.resolveActivity(getPackageManager()) != null) {
-        // Create the File where the photo should go
-        File photoFile = null;
-        try {
-            photoFile = createImageFile();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-            // Error occurred while creating the File
-        }
-        if (photoFile != null) {
-            Uri photoURI = FileProvider.getUriForFile(this, getPackageName() + ".provider", photoFile);
-
-            mPhotoFile = photoFile;
-            takePictureIntent.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
-            startActivityForResult(takePictureIntent, REQUEST_TAKE_PHOTO);
-        }
     }
-}
 
 
     @Override
@@ -411,6 +425,7 @@ private void dispatchTakePictureIntent() {
         }
 
     }
+
     private void previewCapturedemployee(final File file) {
 
         try {
@@ -422,10 +437,10 @@ private void dispatchTakePictureIntent() {
 
             try {
 
-                    if (myBitmap != null) {
-                        myTextView.setText(null);
-                        myImageView.setImageBitmap(myBitmap);
-                    }
+                if (myBitmap != null) {
+                    myTextView.setText(null);
+                    myImageView.setImageBitmap(myBitmap);
+                }
             } catch (Exception e) {
                 Toast.makeText(MainActivity.this, "Something went wrong", Toast.LENGTH_LONG)
                         .show();
@@ -449,7 +464,7 @@ private void dispatchTakePictureIntent() {
             @Override
             public void onFailure
                     (@NonNull Exception exception) {
-                Toast.makeText(MainActivity.this,"Exception", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, "Exception", Toast.LENGTH_LONG).show();
             }
         });
     }
@@ -464,8 +479,25 @@ private void dispatchTakePictureIntent() {
         for (FirebaseVisionText.Block block : firebaseVisionText.getBlocks()) {
             myTextView.append(block.getText());
 
+            fullTxt = myTextView.getText().toString();
+
+            String replacedTxt = fullTxt.replaceAll("[^A-Za-z0-9]", " ");
+            array_fullTxt = replacedTxt.split(" ");
+
+            textMap = new HashMap<>();
+//        textMap.put("kathir", (int) similarity(name, "kathir") * 100);
+//        textMap.put("kathira", (int) similarity(name, "kathira") * 100);
+//        textMap.put("kathirava", (int) similarity(name, "kathirava") * 100);
+//        textMap.put("kathiravan", (int) similarity(name, "kathiravan") * 100);
+//        textMap.put("kathvan", (int) similarity(name, "kathvan") * 100);
+//        textMap.put("kathin", (int) similarity(name, "kathin") * 100);
+//        textMap.put("sfsff", (int) similarity(name, "sfsff") * 100);
+
+
+
         }
     }
+
     private File createImageFile() throws IOException {
         // Create an image file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss",
@@ -475,6 +507,7 @@ private void dispatchTakePictureIntent() {
         File mFile = File.createTempFile(mFileName, ".jpg", storageDir);
         return mFile;
     }
+
     private boolean isRuntimePermission() {
 
         boolean value = true;
@@ -518,6 +551,7 @@ private void dispatchTakePictureIntent() {
         }
         // END_INCLUDE(camera_permission_request)
     }
+
     private boolean checkPermissions() {
         int result;
         List<String> listPermissionsNeeded = new ArrayList<>();
