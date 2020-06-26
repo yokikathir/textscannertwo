@@ -275,7 +275,6 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
                             StringBuffer stb = new StringBuffer(str);
                             stb.reverse();
                             total = ss + stb;
-
                             printSimilarity(input, total);
                             Log.e("sssssssssssss", ":" + total);
                         }
