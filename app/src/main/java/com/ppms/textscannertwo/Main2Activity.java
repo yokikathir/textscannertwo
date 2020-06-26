@@ -41,7 +41,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Set;
 
 public class Main2Activity extends BaseActivity implements View.OnClickListener {
@@ -74,6 +73,7 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
     private ImageView myImageView;
     private TextView myTextView;
     private HashMap<String, Integer> textMap;
+    private boolean isResults = true;
 
     public static double similarity(String s1, String s2) {
         String longer = s1, shorter = s2;
@@ -92,8 +92,6 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
 
     }
 
-    // Example implementation of the Levenshtein Edit Distance
-    // See http://rosettacode.org/wiki/Levenshtein_distance#Java
     public static int editDistance(String s1, String s2) {
         s1 = s1.toLowerCase();
         s2 = s2.toLowerCase();
@@ -185,9 +183,12 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
         searchbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+
+                isResults = true;
                 int count = 0;
                 String main = null;
-                String string1=null;
+                String string1 = null;
                 if (word_search != null) {
                     if (fullTxt != null) {
                         main = word_search;
@@ -199,7 +200,7 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
                             }
                         }
                         //String string1 = "hi people what is the need................ how to ................... do the needful.................................. and you can only need the change......................................... in the fine situation................................................. to do the task................... i am alright............... are you okay?";
-                        string1= fullTxt.toLowerCase();
+                        string1 = fullTxt.toLowerCase();
                         ArrayList<String> mainWordsToFind = new ArrayList<>(mainWords);
                         Log.e("mainWordsToFind", ":" + mainWordsToFind);
                         ArrayList<String> threewords = new ArrayList<>();
@@ -212,118 +213,170 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
                         for (String s : mainWordsToFind) {
                             listString += s;
                             finallistString += s;
+
                         }
-                        boolean passvalue = true;
-                        int countin = 0;
-                        int countout = 0;
-                        int countresult = 0;
-                        int secCountresult=0;
-                        int secCountin=0;
-                        int secCountout=0;
-                        String replacedTxt = string1.replaceAll("[^A-Za-z0-9]", " ");
-                        for (String word : replacedTxt.split(" ")) {
-                            if (word.toLowerCase().length() > 1) {
-                                if (listString.length() >= 3) {
-                                    String bar = listString.toString();
-                                    String desiredString = bar.substring(0, 3);
-                                    if (word.contains(desiredString) && word.length() > 0) {
-                                        threewords.add(word);
-                                        threeString = word;
-                                        printSimilarity(threeString, finallistString);
-                                        countin++;
+                        if (listString.length() >= 3) {
+                            int countin = 0;
+                            int countout = 0;
+                            int countresult = 0;
+                            int secCountresult = 0;
+                            int secCountin = 0;
+                            int secCountout = 0;
+                            String replacedTxt = string1.replaceAll("[^A-Za-z0-9]", " ");
+                            String firststring = string1;
+                            String secondstring = main.trim();
+                            String lastindexenterstring = main.trim();
+                            String sss = firststring;
+                            String input = secondstring;
+                            String ss = input;
+                            String out = null;
+                            int pos = 0;
+                            int totalpos = 0;
+                            int inputtotalpos = 0;
+                            ArrayList<String> imp = new ArrayList<>();
+                            ArrayList<Character> posadd = new ArrayList<>();
+                            boolean containsis = true;
+                            boolean notcontains = true;
+                            for (int i = 0; i <= input.length(); i++) {
+                                if (containsis = true) {
+
+                                    if (sss.contains(ss)) {
+                                        containsis = false;
+                                        pos = sss.lastIndexOf(ss);
+                                        totalpos = pos + ss.length();
+                                        if (ss.length() == input.length()) {
+                                            inputtotalpos = ss.length();
+                                        } else {
+                                            inputtotalpos = ss.length() + pos;
+                                        }
+
+                                        //ss =ss.substring(ss.length(),0).trim();
+                                        break;
                                     } else {
-                                        countout++;
+                                        notcontains = false;
+                                        imp.add(ss.substring(ss.length() - 1).trim());
+                                        ss = (ss.substring(0, ss.length() - 1));
                                     }
-                                } else {
-                                    Toast.makeText(Main2Activity.this, "Please enter the first three letter", Toast.LENGTH_LONG).show();
+
+                                }
+
+                            }
+                            String total;
+                            // if (notcontains=false){
+                            for (int i = totalpos; i <= inputtotalpos; i++) {
+                                Log.e("aaaaaaaaa", "----->" + sss.charAt(i));
+                                posadd.add(sss.charAt(i));
+                            }
+                            StringBuilder builder = new StringBuilder();
+                            for (Character s : posadd) {
+                                builder.append(s);
+                            }
+                            String str = builder.reverse().toString();
+                            StringBuffer stb = new StringBuffer(str);
+                            stb.reverse();
+                            total = ss + stb;
+
+                            printSimilarity(input, total);
+                            Log.e("sssssssssssss", ":" + total);
+                        }
+                           /* if (firststring.contains(secondstring)) {
+                                printSimilarity(secondstring, secondstring);
+                                isResults=false;
+                            } else if (isResults){
+                                for (int i = 0; i < lastindexenterstring.length(); i++) {
+                                    lastindexenterstring= (lastindexenterstring.substring(0,lastindexenterstring.length()-1));
+                                    Log.e("lastenterdata",":"+lastindexenterstring.toString());
+                                    if(firststring.contains(lastindexenterstring)){
+                                        printSimilarity(finallistString, lastindexenterstring);
+                                       // break;
+                                    }
+                                    isResults=false;
+                                   // if(firststring.contains(secondstring-1))
+                                }
+                            } if (firststring.contains(secondstring.substring(1))) {
+                                printSimilarity(secondstring.substring(1), secondstring);
+                            } else if (firststring.contains(secondstring.substring(2))) {
+                                printSimilarity(secondstring.substring(2), secondstring);
+                            }
+                            else if (isResults){
+                                for (String word : replacedTxt.split(" ")) {
+                                    if (word.toLowerCase().length() > 1) {
+                                        if (listString.length() >= 3) {
+
+                                            String bar = listString.toString();
+                                            String desiredString = bar.substring(0, 3);
+                                            if (word.contains(desiredString) && word.length() > 0) {
+                                                threewords.add(word);
+                                                threeString = word;
+                                                printSimilarity(finallistString, threeString);
+                                                countin++;
+                                            } else {
+                                                countout++;
+                                            }
+                                        } else {
+                                            Toast.makeText(Main2Activity.this, "Please enter the first three letter", Toast.LENGTH_LONG).show();
+                                        }
+                                    }
                                 }
                             }
-                        }
-                        countresult = countout - countin;
-                        if (countout <= countresult && countout != 0) {
-                           // Toast.makeText(Main2Activity.this, "Move to second text", Toast.LENGTH_LONG).show();
-                            for (String word : replacedTxt.split(" ")) {
-                                if (word.toLowerCase().length() > 1 && listString.toLowerCase().length() != 0 && !(word.equals(""))) {
-                                    if (listString.length() >= 3) {
-                                        String bar = listString.toString();
-                                        String removestring=bar.substring(1);
-                                        if (removestring.length()>=3) {
-                                            String desiredString = removestring.substring(0, 3);
-                                            String desiredWord = null;
-                                            if (word.toLowerCase().length() > 4) {
-                                                desiredWord = word.substring(1, word.length());
+                            countresult = countout - countin;
+                            if (countout <= countresult && countout != 0) {
+                                // Toast.makeText(Main2Activity.this, "Move to second text", Toast.LENGTH_LONG).show();
+                                for (String word : replacedTxt.split(" ")) {
+                                    if (word.toLowerCase().length() > 1 && listString.toLowerCase().length() != 0 && !(word.equals(""))) {
+                                        if (listString.length() >= 3) {
+                                            String bar = listString.toString();
+                                            String removestring = bar.substring(1);
+                                            if (removestring.length() >= 3) {
+                                                String desiredString = removestring.substring(0, 3);
+                                                String desiredWord = null;
+                                                if (word.toLowerCase().length() > 4) {
+                                                    desiredWord = word.substring(1, word.length());
+                                                } else {
+                                                    desiredWord = word.substring(0, word.length());
+                                                }
+                                                if (desiredWord.contains(desiredString) && desiredWord.length() > 0) {
+                                                    threewords.add(desiredWord);
+                                                    threeString = desiredWord;
+                                                    printSimilarity(finallistString, threeString);
+                                                    secCountin++;
+                                                } else {
+                                                    secCountout++;
+                                                }
                                             } else {
-                                                desiredWord = word.substring(0, word.length());
-                                            }
-                                            if (desiredWord.contains(desiredString) && desiredWord.length() > 0) {
-                                                threewords.add(desiredWord);
-                                                threeString = desiredWord;
-                                                printSimilarity(threeString, finallistString);
-                                                secCountin++;
-                                            } else {
-                                                secCountout++;
+                                                Toast.makeText(Main2Activity.this, "Can't find ,Please enter the extra letter", Toast.LENGTH_LONG).show();
                                             }
                                         }else {
-                                            Toast.makeText(Main2Activity.this, "Can't find ,Please enter the extra letter", Toast.LENGTH_LONG).show();
+                                            Toast.makeText(Main2Activity.this, "Please enter the first three letter", Toast.LENGTH_LONG).show();
                                         }
-                                    } else {
-                                        Toast.makeText(Main2Activity.this, "Please enter the first three letter", Toast.LENGTH_LONG).show();
+                                        secCountresult = secCountout - secCountin;
+                                    } else if (secCountout <= secCountresult && secCountout != 0) {
+                                        Toast.makeText(Main2Activity.this, "Not match please upload the another image", Toast.LENGTH_LONG).show();
+
                                     }
-                                    secCountresult=secCountout-secCountin;
-                                } else if (secCountout<=secCountresult && secCountout!=0){
-                                    Toast.makeText(Main2Activity.this, "Not match please upload the another image", Toast.LENGTH_LONG).show();
-
                                 }
                             }
-                        }
-
-               /* for (String word : string1.split("\\W")) {
-                    if (word.toLowerCase().length() > 1) {
-                        if (word.contains(listString) && word.length() > 0) {
-                            processedWords.add(word);
-                            mainString = word;
-                            mainWordsToFind.remove(word.toLowerCase());
-                            count++;
-                            passvalue=false;
-                        }else {
-                            printSimilarity("kathiravan","kathirn");
-                        }
-                    }
-                }*/
-              /*  if (passvalue){
-                    for (String word : string1.split("\\W")) {
-                        if (word.toLowerCase().length() > 1) {
-                            listString = listString.substring(0, listString.length() - 1);
-                            for (int i=0; i<listString.length();i++) {
-                                if (word.contains(listString) && word.length() > 0) {
-                                    processedWords.add(word);
-                                    mainString = word;
-                                    mainWordsToFind.remove(word.toLowerCase());
-                                    count++;
-                                    passvalue=false;
-                                }
-                            }
-                        }
-                    }
-                }*/
-
 
 // Print the percent of word found
-                        int mainint;
-                        if (mainString != null) {
-                            mainint = mainString.length();
+                            int mainint;
+                            if (mainString != null) {
+                                mainint = mainString.length();
+                            } else {
+                                mainint = 1;
+                            }
+                            int enterint = listString.length();
+                            System.out.println("percentage" + (double) (double) enterint / mainint * 100);
+                            int result = enterint / mainint * 100;
+                            Log.e("resultdata", ":" + result);
+                            // Toast.makeText(Main2Activity.this,"percentage"+(double) enterint /mainint*100,Toast.LENGTH_LONG).show();
                         } else {
-                            mainint = 1;
-                        }
-                        int enterint = listString.length();
-                        System.out.println("percentage" + (double) (double) enterint / mainint * 100);
-                        int result = enterint / mainint * 100;
-                        Log.e("resultdata", ":" + result);
-                        // Toast.makeText(Main2Activity.this,"percentage"+(double) enterint /mainint*100,Toast.LENGTH_LONG).show();
-                    }else {
+                            Toast.makeText(Main2Activity.this, "Please enter the first three letter", Toast.LENGTH_LONG).show();
+
+                        }*/
+                    } else {
                         Toast.makeText(Main2Activity.this, "OCR text are empty", Toast.LENGTH_LONG).show();
                     }
-                }else {
+                } else {
                     Toast.makeText(Main2Activity.this, "Please enter the text", Toast.LENGTH_LONG).show();
                 }
             }
