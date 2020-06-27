@@ -75,6 +75,7 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
     private HashMap<String, Integer> textMap;
     private boolean isResults = true;
 
+
     public static double similarity(String s1, String s2) {
         String longer = s1, shorter = s2;
         if (s1.length() < s2.length()) { // longer should always have greater length
@@ -131,6 +132,9 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
         }
         mCompressor = new FileCompressor(this);
         myTextView = findViewById(R.id.textView);
+        /*myTextView.setText("smart kathiravan family object  hello welcome");
+
+        fullTxt = myTextView.getText().toString();*/
         myImageView = findViewById(R.id.imageView);
         findViewById(R.id.checkText).setOnClickListener(this);
         findViewById(R.id.camera).setOnClickListener(this);
@@ -183,8 +187,10 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
         searchbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-
-
+                boolean isResultsone = true;
+                boolean isResultstwo = true;
+                String subinputone=null;
+                String subinputtwo=null;
                 isResults = true;
                 int count = 0;
                 String main = null;
@@ -222,12 +228,13 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
                             int secCountresult = 0;
                             int secCountin = 0;
                             int secCountout = 0;
+                            int poscount = 0;
                             String replacedTxt = string1.replaceAll("[^A-Za-z0-9]", " ");
                             String firststring = string1;
                             String secondstring = main.trim();
                             String lastindexenterstring = main.trim();
                             String sss = firststring;
-                            String input = secondstring;
+                            String input = secondstring.toLowerCase();
                             String ss = input;
                             String out = null;
                             int pos = 0;
@@ -247,36 +254,53 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
                                         if (ss.length() == input.length()) {
                                             inputtotalpos = ss.length();
                                         } else {
-                                            inputtotalpos = ss.length() + pos;
+                                            inputtotalpos = ss.length() + pos + poscount;
                                         }
 
                                         //ss =ss.substring(ss.length(),0).trim();
                                         break;
+                                    } else if (sss.contains(ss.substring(1))) {
+                                        subinputone = ss.substring(1);
+                                        isResultsone = false;
+
+                                        Log.e("aaaaaaaaa", "----->" + ss.substring(1) + "---->" + ss);
+                                    } else if (sss.contains(ss.substring(2))) {
+                                        Log.e("aaaaaaaaa", "----->" + ss.substring(2) + "---->" + ss);
+                                        subinputtwo = ss.substring(2);
+                                        isResultstwo = false;
+
                                     } else {
                                         notcontains = false;
                                         imp.add(ss.substring(ss.length() - 1).trim());
                                         ss = (ss.substring(0, ss.length() - 1));
+                                        poscount++;
                                     }
 
                                 }
 
                             }
-                            String total;
-                            // if (notcontains=false){
-                            for (int i = totalpos; i <= inputtotalpos; i++) {
-                                Log.e("aaaaaaaaa", "----->" + sss.charAt(i));
-                                posadd.add(sss.charAt(i));
+                            if (isResultsone == false) {
+                                printSimilarity(subinputone, ss);
+                            } else if (isResultstwo == false) {
+                                printSimilarity(subinputtwo, ss);
                             }
-                            StringBuilder builder = new StringBuilder();
-                            for (Character s : posadd) {
-                                builder.append(s);
+                            if (isResultstwo && isResultsone) {
+                                String total;
+                                // if (notcontains=false){
+                                for (int i = totalpos; i <= inputtotalpos; i++) {
+                                    posadd.add(sss.charAt(i));
+                                }
+                                StringBuilder builder = new StringBuilder();
+                                for (Character s : posadd) {
+                                    builder.append(s);
+                                }
+                                String str = builder.reverse().toString();
+                                StringBuffer stb = new StringBuffer(str);
+                                stb.reverse();
+                                total = ss + stb;
+                                 printSimilarity(total.trim(), input);
+                                Log.e("sssssssssssss", ":" + total);
                             }
-                            String str = builder.reverse().toString();
-                            StringBuffer stb = new StringBuffer(str);
-                            stb.reverse();
-                            total = ss + stb;
-                            printSimilarity(input, total);
-                            Log.e("sssssssssssss", ":" + total);
                         }
                            /* if (firststring.contains(secondstring)) {
                                 printSimilarity(secondstring, secondstring);
@@ -683,6 +707,7 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
         }
         for (FirebaseVisionText.Block block : firebaseVisionText.getBlocks()) {
             myTextView.append(block.getText());
+           // myTextView.setText("smart family object kathiravan hello welcome");
 
             fullTxt = myTextView.getText().toString();
 
