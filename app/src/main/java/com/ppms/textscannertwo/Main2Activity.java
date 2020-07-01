@@ -10,7 +10,11 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -37,11 +41,15 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+
+import static android.Manifest.permission.ACCESS_COARSE_LOCATION;
+import static android.Manifest.permission.ACCESS_FINE_LOCATION;
 
 public class Main2Activity extends BaseActivity implements View.OnClickListener {
     public static final int MULTIPLE_PERMISSIONS = 10;
@@ -49,15 +57,11 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
     static final int REQUEST_IMAGE_CAPTURE = 1;
     private static final int REQUEST_CONTACTS = 1;
     static String ServerKey = null;
+    private ArrayList<String> permissions = new ArrayList<>();
     private static String[] PERMISSIONS_CONTACT = {Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.CAMERA};
-    String[] permissions = new String[]{
-            Manifest.permission.CAMERA,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.READ_EXTERNAL_STORAGE,
-
-
-    };
+    private ArrayList<String> permissionsToRequest;
+    private final static int ALL_PERMISSIONS_RESULT = 101;
     File mPhotoFile;
     FileCompressor mCompressor;
     AutoCompleteTextView autoCompleteTextView;
@@ -71,11 +75,15 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
     private Bitmap myBitmap;
     private Button searchbtn;
     private ImageView myImageView;
-    private TextView myTextView;
+    private TextView myTextView, gpstextview;
     private HashMap<String, Integer> textMap;
     private boolean isResults = true;
-
-
+    int printsimilarity=0;
+    int frontprintsimilarity=0;
+    double longitude;
+    double latitude;
+    String datetimee;
+    GPSTracker locationTrack;
     public static double similarity(String s1, String s2) {
         String longer = s1, shorter = s2;
         if (s1.length() < s2.length()) { // longer should always have greater length
@@ -127,6 +135,17 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
         Button searchbtn = findViewById(R.id.searchbtn);
         // autoCompleteTextView=findViewById(R.id.auto);
         editetext = findViewById(R.id.editetext);
+        gpstextview=findViewById(R.id.textView1);
+        permissions.add(ACCESS_FINE_LOCATION);
+        permissions.add(ACCESS_COARSE_LOCATION);
+        permissionsToRequest = findUnAskedPermissions(permissions);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+
+            if (permissionsToRequest.size() > 0)
+                requestPermissions(permissionsToRequest.toArray(new String[permissionsToRequest.size()]), ALL_PERMISSIONS_RESULT);
+        }
         if (!checkPermissions()) {
             isRuntimePermission();
         }
@@ -187,6 +206,8 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
         searchbtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+
+//OCR search text
                 boolean isResultsone = true;
                 boolean isResultstwo = true;
                 String subinputone=null;
@@ -195,6 +216,7 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
                 int count = 0;
                 String main = null;
                 String string1 = null;
+                //Reverse concept
                 if (word_search != null) {
                     if (fullTxt != null) {
                         main = word_search;
@@ -206,7 +228,7 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
                             }
                         }
                         //String string1 = "hi people what is the need................ how to ................... do the needful.................................. and you can only need the change......................................... in the fine situation................................................. to do the task................... i am alright............... are you okay?";
-                        string1 = fullTxt.toLowerCase();
+                        string1 = fullTxt.replaceAll("[-+.^:,!@#$%&*()/?]","").toLowerCase();
                         ArrayList<String> mainWordsToFind = new ArrayList<>(mainWords);
                         Log.e("mainWordsToFind", ":" + mainWordsToFind);
                         ArrayList<String> threewords = new ArrayList<>();
@@ -222,20 +244,16 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
 
                         }
                         if (listString.length() >= 3) {
-                            int countin = 0;
-                            int countout = 0;
-                            int countresult = 0;
-                            int secCountresult = 0;
-                            int secCountin = 0;
-                            int secCountout = 0;
+                            int spaceCount = 0;
                             int poscount = 0;
-                            String replacedTxt = string1.replaceAll("[^A-Za-z0-9]", " ");
-                            String firststring = string1;
+                            String replacedTxt = string1.replaceAll("[^A-Za-z0-9][-+.^:,!@#$%&*()/?]", "");
+                            String firststring = replacedTxt.replace(" ","");
                             String secondstring = main.trim();
                             String lastindexenterstring = main.trim();
-                            String sss = firststring;
-                            String input = secondstring.toLowerCase();
-                            String ss = input;
+                            String ocrtext = firststring;
+                            String inputt=secondstring.replaceAll("[-+.^:,!@#$%&*()/?]","").toLowerCase();
+                            String input = inputt.replace(" ","");
+                            String maininput = input;
                             String out = null;
                             int pos = 0;
                             int totalpos = 0;
@@ -247,32 +265,28 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
                             for (int i = 0; i <= input.length(); i++) {
                                 if (containsis = true) {
 
-                                    if (sss.contains(ss)) {
+                                    if (ocrtext.contains(maininput)) {
                                         containsis = false;
-                                        pos = sss.lastIndexOf(ss);
-                                        totalpos = pos + ss.length();
-                                        if (ss.length() == input.length()) {
-                                            inputtotalpos = ss.length();
+                                        pos = ocrtext.lastIndexOf(maininput);
+                                        totalpos = pos + maininput.length();
+                                        if (maininput.length() == input.length()) {
+                                            inputtotalpos = maininput.length();
                                         } else {
-                                            inputtotalpos = ss.length() + pos + poscount;
+                                            inputtotalpos = maininput.length() + pos + poscount;
                                         }
-
-                                        //ss =ss.substring(ss.length(),0).trim();
                                         break;
-                                    } else if (sss.contains(ss.substring(1))) {
-                                        subinputone = ss.substring(1);
+                                    } else if (ocrtext.contains(maininput.substring(1))) {
+                                        subinputone = maininput.substring(1);
                                         isResultsone = false;
 
-                                        Log.e("aaaaaaaaa", "----->" + ss.substring(1) + "---->" + ss);
-                                    } else if (sss.contains(ss.substring(2))) {
-                                        Log.e("aaaaaaaaa", "----->" + ss.substring(2) + "---->" + ss);
-                                        subinputtwo = ss.substring(2);
+                                    } else if (ocrtext.contains(maininput.substring(2))) {
+                                        subinputtwo = maininput.substring(2);
                                         isResultstwo = false;
 
                                     } else {
                                         notcontains = false;
-                                        imp.add(ss.substring(ss.length() - 1).trim());
-                                        ss = (ss.substring(0, ss.length() - 1));
+                                        imp.add(maininput.substring(maininput.length() - 1).trim());
+                                        maininput = (maininput.substring(0, maininput.length() - 1));
                                         poscount++;
                                     }
 
@@ -280,15 +294,15 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
 
                             }
                             if (isResultsone == false) {
-                                printSimilarity(subinputone, ss);
+                                printSimilarity(subinputone, maininput);
                             } else if (isResultstwo == false) {
-                                printSimilarity(subinputtwo, ss);
+                                printSimilarity(subinputtwo, maininput);
                             }
                             if (isResultstwo && isResultsone) {
                                 String total;
                                 // if (notcontains=false){
-                                for (int i = totalpos; i <= inputtotalpos; i++) {
-                                    posadd.add(sss.charAt(i));
+                                for (int i = totalpos; i < inputtotalpos; i++) {
+                                    posadd.add(ocrtext.charAt(i));
                                 }
                                 StringBuilder builder = new StringBuilder();
                                 for (Character s : posadd) {
@@ -297,272 +311,160 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
                                 String str = builder.reverse().toString();
                                 StringBuffer stb = new StringBuffer(str);
                                 stb.reverse();
-                                total = ss + stb;
+                                total = maininput + stb;
                                  printSimilarity(total.trim(), input);
                                 Log.e("sssssssssssss", ":" + total);
                             }
                         }
-                           /* if (firststring.contains(secondstring)) {
-                                printSimilarity(secondstring, secondstring);
-                                isResults=false;
-                            } else if (isResults){
-                                for (int i = 0; i < lastindexenterstring.length(); i++) {
-                                    lastindexenterstring= (lastindexenterstring.substring(0,lastindexenterstring.length()-1));
-                                    Log.e("lastenterdata",":"+lastindexenterstring.toString());
-                                    if(firststring.contains(lastindexenterstring)){
-                                        printSimilarity(finallistString, lastindexenterstring);
-                                       // break;
-                                    }
-                                    isResults=false;
-                                   // if(firststring.contains(secondstring-1))
-                                }
-                            } if (firststring.contains(secondstring.substring(1))) {
-                                printSimilarity(secondstring.substring(1), secondstring);
-                            } else if (firststring.contains(secondstring.substring(2))) {
-                                printSimilarity(secondstring.substring(2), secondstring);
-                            }
-                            else if (isResults){
-                                for (String word : replacedTxt.split(" ")) {
-                                    if (word.toLowerCase().length() > 1) {
-                                        if (listString.length() >= 3) {
 
-                                            String bar = listString.toString();
-                                            String desiredString = bar.substring(0, 3);
-                                            if (word.contains(desiredString) && word.length() > 0) {
-                                                threewords.add(word);
-                                                threeString = word;
-                                                printSimilarity(finallistString, threeString);
-                                                countin++;
-                                            } else {
-                                                countout++;
-                                            }
-                                        } else {
-                                            Toast.makeText(Main2Activity.this, "Please enter the first three letter", Toast.LENGTH_LONG).show();
-                                        }
-                                    }
-                                }
-                            }
-                            countresult = countout - countin;
-                            if (countout <= countresult && countout != 0) {
-                                // Toast.makeText(Main2Activity.this, "Move to second text", Toast.LENGTH_LONG).show();
-                                for (String word : replacedTxt.split(" ")) {
-                                    if (word.toLowerCase().length() > 1 && listString.toLowerCase().length() != 0 && !(word.equals(""))) {
-                                        if (listString.length() >= 3) {
-                                            String bar = listString.toString();
-                                            String removestring = bar.substring(1);
-                                            if (removestring.length() >= 3) {
-                                                String desiredString = removestring.substring(0, 3);
-                                                String desiredWord = null;
-                                                if (word.toLowerCase().length() > 4) {
-                                                    desiredWord = word.substring(1, word.length());
-                                                } else {
-                                                    desiredWord = word.substring(0, word.length());
-                                                }
-                                                if (desiredWord.contains(desiredString) && desiredWord.length() > 0) {
-                                                    threewords.add(desiredWord);
-                                                    threeString = desiredWord;
-                                                    printSimilarity(finallistString, threeString);
-                                                    secCountin++;
-                                                } else {
-                                                    secCountout++;
-                                                }
-                                            } else {
-                                                Toast.makeText(Main2Activity.this, "Can't find ,Please enter the extra letter", Toast.LENGTH_LONG).show();
-                                            }
-                                        }else {
-                                            Toast.makeText(Main2Activity.this, "Please enter the first three letter", Toast.LENGTH_LONG).show();
-                                        }
-                                        secCountresult = secCountout - secCountin;
-                                    } else if (secCountout <= secCountresult && secCountout != 0) {
-                                        Toast.makeText(Main2Activity.this, "Not match please upload the another image", Toast.LENGTH_LONG).show();
-
-                                    }
-                                }
-                            }
-
-// Print the percent of word found
-                            int mainint;
-                            if (mainString != null) {
-                                mainint = mainString.length();
-                            } else {
-                                mainint = 1;
-                            }
-                            int enterint = listString.length();
-                            System.out.println("percentage" + (double) (double) enterint / mainint * 100);
-                            int result = enterint / mainint * 100;
-                            Log.e("resultdata", ":" + result);
-                            // Toast.makeText(Main2Activity.this,"percentage"+(double) enterint /mainint*100,Toast.LENGTH_LONG).show();
-                        } else {
-                            Toast.makeText(Main2Activity.this, "Please enter the first three letter", Toast.LENGTH_LONG).show();
-
-                        }*/
                     } else {
                         Toast.makeText(Main2Activity.this, "OCR text are empty", Toast.LENGTH_LONG).show();
                     }
                 } else {
                     Toast.makeText(Main2Activity.this, "Please enter the text", Toast.LENGTH_LONG).show();
                 }
-            }
-        });
-
-        /*searchbtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String string1 = word_search;
-
-
-                String string2 = fullTxt;
-
-                int count = 0;
-                String[] array = string1.split(" ");
-                int sss= string1.length();
-                ArrayList<String> processedWords = new ArrayList<>();
-                for(String str : array){
-
-                    if (string2.contains(str) && !processedWords.contains(str) && str.length() > 0){
-                        System.out.println(str);
-
-                        processedWords.add(str);
-                        count++;
-                    }
-
-                }
-                System.out.println("Total words: " +sss);
-                System.out.println("Count: " +count);
-
-                System.out.println("Percent value: " +((float)sss/count)*100);
-
-            }
-        });*/
-
-       /* searchbtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                autoitems=editetext.getText().toString();
-
-
-                int total = 0;
-                //word_search = autoitems.trim().toLowerCase();
-                fullTxt = myTextView.getText().toString();
-                // match(fullTxt,word_search);
-
-                String[] array = array_fullTxt;
-                String[] markiert = new String[array.length];
-                String word;
-                StringBuilder st = new StringBuilder();
-                for (int i = 0; i < array.length; i++) {
-                    word = array[i];
-                    if (word.toLowerCase().contains(word_search)) {
-                        word_search = autoitems.trim().toLowerCase();
-                        String name = word_search;
-
-                        int maxArrayPosition = 0;
-                        for (int j = 0; j < array.length - 1; j++) {
-                            for (String c : array) {
-                                int next = c.indexOf(c, i);
-                            }
-                            if (similarity(name, array[j]) > similarity(name, array[j + 1])) {
-                                maxArrayPosition = j;
-                            } else {
-                                maxArrayPosition = j + 1;
+//Front concept
+/*
+                if (word_search != null) {
+                    if (fullTxt != null) {
+                      String frontsubinputone=null;
+                      String frontsubinputtwo=null;
+                        main = word_search;
+// Extract all the words whose length is > 1 and remove duplicates
+                        Set<String> mainWords = new HashSet<>();
+                        for (String s : main.split("\\W")) {
+                            if (s.length() > 1) {
+                                mainWords.add(s.toLowerCase());
                             }
                         }
-                        printSimilarity(name, array[maxArrayPosition]);
-                        Log.e("wordtext", ":" + word + "------>" + word_search + "----->");
+                        string1 = fullTxt.replace(" ","").toLowerCase();
+                        ArrayList<String> frontmainWordsToFind = new ArrayList<>(mainWords);
+                        Log.e("mainWordsToFind", ":" + frontmainWordsToFind);
+                        String mainString = null;
+                        String threeString = null;
 
-                        markiert[i] = word.trim();//this is result in array do whatever you want with it
-                        st.append("<b><i>" + markiert[i] + "</i></b>");
-                        total++;
+                        String listString = "";
+                        String finallistString = "";
+
+                        for (String s : frontmainWordsToFind) {
+                            listString += s;
+                            finallistString += s;
+
+                        }
+                        if (listString.length() >= 3) {
+                            int spaceCount = 0;
+                            int frontposcount = 0;
+                            String replacedTxt = string1.replaceAll("[^A-Za-z0-9]", "");
+                            String firststring = replacedTxt;
+                            String secondstring = main.trim();
+                            String lastindexenterstring = main.trim();
+                            String ocrtext = firststring;
+                            String input = secondstring.replace(" ","").toLowerCase();
+                            String frontmaininput = input;
+                            String out = null;
+                            int frontpos = 0;
+                            int fronttotalpos = 0;
+                            int frontinputtotalpos = 0;
+                            ArrayList<String> frontimp = new ArrayList<>();
+                            ArrayList<Character> frontposadd = new ArrayList<>();
+                            boolean containsis = true;
+                            boolean notcontains = true;
+                            for (int i = 0; i <= input.length(); i++) {
+                                if (containsis = true) {
+
+                                    if (ocrtext.contains(frontmaininput)) {
+                                        containsis = false;
+                                        frontpos = ocrtext.lastIndexOf(frontmaininput);
+                                        fronttotalpos = frontpos + frontmaininput.length();
+                                        if (frontmaininput.length() == input.length()) {
+                                            frontinputtotalpos = frontmaininput.length();
+                                        } else {
+                                            frontinputtotalpos = frontmaininput.length() + frontpos + frontposcount;
+                                        }
+                                        break;
+                                    }*//* else if (ocrtext.contains(frontmaininput.substring(1))) {
+                                        frontsubinputone = frontmaininput.substring(1);
+                                        isResultsone = false;
+
+                                    } else if (ocrtext.contains(frontmaininput.substring(2))) {
+                                        frontsubinputtwo = frontmaininput.substring(2);
+                                        isResultstwo = false;
+
+                                    }*//* else {
+                                        notcontains = false;
+                                        frontimp.add(frontmaininput.substring(1));
+                                        frontmaininput = (frontmaininput.substring(1));
+                                        frontposcount++;
+                                    }
+
+                                }
+
+                            }
+                            if (isResultsone == false) {
+                                secondprintSimilarity(frontsubinputone, frontmaininput);
+                            } else if (isResultstwo == false) {
+                                secondprintSimilarity(frontsubinputtwo, frontmaininput);
+                            }
+                            if (isResultstwo && isResultsone) {
+                                String total;
+                                // if (notcontains=false){
+                                for (int i = fronttotalpos; i < frontinputtotalpos; i++) {
+                                    frontposadd.add(ocrtext.charAt(i));
+                                }
+                                StringBuilder builder = new StringBuilder();
+                                for (Character s : frontposadd) {
+                                    builder.append(s);
+                                }
+                                String str = builder.reverse().toString();
+                                StringBuffer stb = new StringBuffer(str);
+                                stb.reverse();
+                                total = frontmaininput + stb;
+                                secondprintSimilarity(total.trim(), input);
+                                Log.e("sssssssssssss", ":" + total);
+                            }
+                        }
+
                     } else {
-                        st.append(word);
+                        Toast.makeText(Main2Activity.this, "OCR text are empty", Toast.LENGTH_LONG).show();
                     }
-                    st.append("<br>");
-                }
-                //Toast.makeText(MainActivity.this,"Text"+st+"",Toast.LENGTH_LONG).show();
-                // Toast.makeText(MainActivity.this,"Text"+total+"",Toast.LENGTH_LONG).show();
-
+                } else {
+                    Toast.makeText(Main2Activity.this, "Please enter the text", Toast.LENGTH_LONG).show();
+                }*/
             }
-        });*/
+        });
 
 
     }
 
     //----------------------------------------------------------------------------------------------------------------
 
-    /*
-    public  boolean match(String s, String p) {
-        String us = s.toUpperCase();
-        int i = 0;
-        for (char c : p.toUpperCase().toCharArray()) {
-            int next = us.indexOf(c, i);
-            if (next < 0) {
-                return false;
-            }
-            i = next+1;
 
-
-        }
-        return true;
-    }
-    public static double similarity(String s1, String s2) {
-        String longer = s1, shorter = s2;
-        if (s1.length() < s2.length()) { // longer should always have greater length
-            longer = s2;
-            shorter = s1;
-        }
-        int longerLength = longer.length();
-        if (longerLength == 0) {
-            return 1.0; *//* both strings are zero length *//*
-        }
-    *//* // If you have Apache Commons Text, you can use it to calculate the edit distance:
-    LevenshteinDistance levenshteinDistance = new LevenshteinDistance();
-    return (longerLength - levenshteinDistance.apply(longer, shorter)) / (double) longerLength; *//*
-        return (longerLength - editDistance(longer, shorter)) / (double) longerLength;
-
-    }
-
-    // Example implementation of the Levenshtein Edit Distance
-    // See http://rosettacode.org/wiki/Levenshtein_distance#Java
-    public static int editDistance(String s1, String s2) {
-        s1 = s1.toLowerCase();
-        s2 = s2.toLowerCase();
-
-        int[] costs = new int[s2.length() + 1];
-        for (int i = 0; i <= s1.length(); i++) {
-            int lastValue = i;
-            for (int j = 0; j <= s2.length(); j++) {
-                if (i == 0)
-                    costs[j] = j;
-
-                else {
-                    if (j > 0) {
-                        int newValue = costs[j - 1];
-                        if (s1.charAt(i - 1) != s2.charAt(j - 1))
-                            newValue = Math.min(Math.min(newValue, lastValue),
-                                    costs[j]) + 1;
-                        costs[j - 1] = lastValue;
-                        lastValue = newValue;
-                        Log.e("results--->",":"+lastValue+"--->"+costs[j]);
-                    }
-                }
-            }
-            if (i > 0)
-                costs[s2.length()] = lastValue;
-        }
-        return costs[s2.length()];
-    }
- public void printSimilarity(String s, String t) {
-        Toast.makeText(MainActivity.this,similarity(s, t)*100 + "% match",Toast.LENGTH_LONG).show();
-        System.out.println(String.format("%.3f is the similarity between \"%s\" and \"%s\"", similarity(s, t), s, t));
-        Log.e("results--->",":"+s+"--->"+t);
-    }
-   */
 //-------------------------------------------------------------------------------------------------------------------------------------------
     public void printSimilarity(String s, String t) {
-        Toast.makeText(Main2Activity.this, similarity(s, t) * 100 + "% match", Toast.LENGTH_LONG).show();
+        Toast.makeText(Main2Activity.this, similarity(s, t) * 100 + "% match"+"\nOCR TEXT     " +s.toString()+"\nINTPUT TEXT     "+t.toString(), Toast.LENGTH_LONG).show();
+        System.out.println(String.format("%.3f is the similarity between \"%s\" and \"%s\"", similarity(s, t), s, t));
+
+        printsimilarity= (int) (similarity(s, t) * 100);
+        Log.e("results--->", ":" +printsimilarity);
+      //  results();
+
+    }
+   /* public void secondprintSimilarity(String s, String t) {
+       // Toast.makeText(Main2Activity.this, similarity(s, t) * 100 + "% match"+"\nOCR TEXT     " +s.toString()+"\nINTPUT TEXT     "+t.toString(), Toast.LENGTH_LONG).show();
         System.out.println(String.format("%.3f is the similarity between \"%s\" and \"%s\"", similarity(s, t), s, t));
         Log.e("results--->", ":" + s + "--->" + t);
-    }
+        frontprintsimilarity= (int) (similarity(s, t) * 100);
+        results();
+    }*/
+   /* public void results(){
+        if (frontprintsimilarity<printsimilarity){
+            Toast.makeText(Main2Activity.this, printsimilarity+ "% match", Toast.LENGTH_LONG).show();
+
+        }else {
+            Toast.makeText(Main2Activity.this, frontprintsimilarity+ "% match", Toast.LENGTH_LONG).show();
+
+        }
+    }*/
 
     @Override
     public void onClick(View view) {
@@ -573,7 +475,27 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
                 }
                 break;
             case R.id.camera:
-                dispatchTakePictureIntent();
+                //Location track
+                locationTrack = new GPSTracker(Main2Activity.this);
+
+
+                String currentDateAndTime = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss").format(new Date());
+
+
+
+                datetimee= String.valueOf(currentDateAndTime);
+                if (locationTrack.canGetLocation()) {
+
+
+                    longitude = locationTrack.getLongitude();
+                    latitude = locationTrack.getLatitude();
+                    dispatchTakePictureIntent();
+                    Toast.makeText(getApplicationContext(), "Longitude:" + Double.toString(longitude) + "\nLatitude:" + Double.toString(latitude)+"\n"+datetimee, Toast.LENGTH_SHORT).show();
+                } else {
+
+                    locationTrack.showSettingsAlert();
+                }
+               // dispatchTakePictureIntent();
                /* if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                     if (!isRuntimePermission()) {
                         requestCameraPermission();
@@ -636,7 +558,33 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
             }
         }
     }
+    public Bitmap combineImages(Bitmap background, Bitmap foreground) {
 
+
+        Paint myCircle;
+        Bitmap cs;
+        cs = Bitmap.createBitmap(background.getWidth(), background.getHeight(), Bitmap.Config.ARGB_8888);
+
+        //creating canvas by background image's width and height
+        Canvas comboImage = new Canvas(cs);
+        background = Bitmap.createScaledBitmap(background, background.getWidth(), background.getHeight(), true);
+
+        //Drawing background to canvas
+        comboImage.drawBitmap(background, 0, 0, null);
+
+        //Drawing foreground (text) to canvas
+        // comboImage.drawBitmap(foreground, myTextView.getCompoundPaddingLeft(),myTextView.getBottom(), null);
+        Canvas myCanvas = new Canvas(foreground);
+        Paint paint = new Paint();
+        paint.setAntiAlias(true);
+        paint.setSubpixelText(true);
+        paint.setStyle(Paint.Style.FILL);
+        paint.setColor(Color.RED);
+        paint.setTextSize(10);
+        comboImage.drawBitmap(foreground, (gpstextview.getWidth() - foreground.getWidth()) / 2,  850, null);
+
+        return cs;
+    }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -667,8 +615,26 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
             try {
 
                 if (myBitmap != null) {
-                    myTextView.setText(null);
-                    myImageView.setImageBitmap(myBitmap);
+                    gpstextview.setText("Longitude:" + Double.toString(longitude) + "\nLatitude:" + Double.toString(latitude) + "\n" + datetimee);
+                    // myImageView.setImageBitmap(myBitmap);
+                    gpstextview.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            //generate bitmap of textView by using getDrawingCache()
+                            //  myTextView.setText("Longitude:" + Double.toString(longitude) + "\nLatitude:" + Double.toString(latitude));
+
+                            gpstextview.buildDrawingCache();
+                            Bitmap bmp = Bitmap.createBitmap(gpstextview.getDrawingCache());
+                            myImageView.buildDrawingCache();
+                            Bitmap bitmapBackground = myBitmap;
+
+//                Bitmap bitmapBackground = mImageView.getDrawingCache();
+
+//combining two bitmaps
+                            Bitmap combined = combineImages(bitmapBackground, bmp);
+                            ((ImageView) findViewById(R.id.imageView)).setImageBitmap(combined);
+                        }
+                    });
                 }
             } catch (Exception e) {
                 Toast.makeText(Main2Activity.this, "Something went wrong", Toast.LENGTH_LONG)
@@ -796,5 +762,33 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
         }
         return true;
     }
+    private ArrayList<String> findUnAskedPermissions(ArrayList<String> wanted) {
+        ArrayList<String> result = new ArrayList<String>();
 
+        for (String perm : wanted) {
+            if (!hasPermission(perm)) {
+                result.add(perm);
+            }
+        }
+
+        return result;
+    }
+
+    private boolean hasPermission(String permission) {
+        if (canMakeSmores()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                return (checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED);
+            }
+        }
+        return true;
+    }
+    private boolean canMakeSmores() {
+        return (Build.VERSION.SDK_INT > Build.VERSION_CODES.LOLLIPOP_MR1);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        locationTrack.stopListener();
+    }
 }
