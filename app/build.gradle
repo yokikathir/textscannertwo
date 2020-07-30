@@ -5,7 +5,7 @@ android {
     buildToolsVersion "29.0.2"
     defaultConfig {
         applicationId "com.ppms.textscannertwo"
-        minSdkVersion 15
+        minSdkVersion 21
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -36,5 +36,21 @@ dependencies {
     implementation('com.github.bumptech.glide:glide:4.7.1@aar') {
         transitive = true
     }
+
+    //camera
+    // def camerax_version = "1.0.0-beta05"
+
+    def cameraxVersion = "1.0.0-alpha02"
+    implementation "androidx.camera:camera-core:${cameraxVersion}"
+    implementation "androidx.camera:camera-camera2:${cameraxVersion}"
+    // implementation "androidx.camera:camera-lifecycle:${camerax_version}"
+
+    //implementation"androidx.camera:camera-view:1.0.0-alpha12"
+
+    // implementation "androidx.camera:camera-extensions:1.0.0-alpha12"
+
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }
 apply plugin: 'com.google.gms.google-services'
+apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'

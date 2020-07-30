@@ -294,9 +294,9 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
 
                             }
                             if (isResultsone == false) {
-                                printSimilarity(subinputone, maininput);
+                                printSimilarity(subinputone, input);
                             } else if (isResultstwo == false) {
-                                printSimilarity(subinputtwo, maininput);
+                                printSimilarity(subinputtwo, input);
                             }
                             if (isResultstwo && isResultsone) {
                                 String total;
@@ -610,27 +610,22 @@ public class Main2Activity extends BaseActivity implements View.OnClickListener 
             String filePath = file.getPath();
             myBitmap = BitmapFactory.decodeFile(filePath);
             Log.e("mybitmap", ":" + myBitmap);
-
+           // myImageView.setImageBitmap(myBitmap);
 
             try {
 
                 if (myBitmap != null) {
                     gpstextview.setText("Longitude:" + Double.toString(longitude) + "\nLatitude:" + Double.toString(latitude) + "\n" + datetimee);
+                  //  gpstextview.setText("");
+
                     // myImageView.setImageBitmap(myBitmap);
                     gpstextview.post(new Runnable() {
                         @Override
                         public void run() {
-                            //generate bitmap of textView by using getDrawingCache()
-                            //  myTextView.setText("Longitude:" + Double.toString(longitude) + "\nLatitude:" + Double.toString(latitude));
-
                             gpstextview.buildDrawingCache();
                             Bitmap bmp = Bitmap.createBitmap(gpstextview.getDrawingCache());
                             myImageView.buildDrawingCache();
                             Bitmap bitmapBackground = myBitmap;
-
-//                Bitmap bitmapBackground = mImageView.getDrawingCache();
-
-//combining two bitmaps
                             Bitmap combined = combineImages(bitmapBackground, bmp);
                             ((ImageView) findViewById(R.id.imageView)).setImageBitmap(combined);
                         }
